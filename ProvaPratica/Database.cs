@@ -1,13 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using MySql.Data.MySqlClient;
 
 namespace ProvaPratica
 {
-    using MySql.Data.MySqlClient;
-    using System;
     public static class Database
     {
         //Implemente o método SalvarUsuario
@@ -15,14 +10,27 @@ namespace ProvaPratica
         {
             string connectionString = "server=localhost;port=3306;user id=root" + "; database=ti_113_windowsforms;";
 
-            string query = "INSERT INTO usuarios (nome, telefone) VALUES (@Nome, @Telefone)";
-
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 try
                 {
                     connection.Open();
 
+                    string verificarTelQuery = "SELECT COUNT(*) FROM usuarios WHERE Telefone = @Telefone";
+                    using (MySqlCommand cmdVerificar = new MySqlCommand(verificarTelQuery, connection))
+                    {
+                        cmdVerificar.Parameters.AddWithValue("@Telefone", usuario.Telefone);
+
+                        int count = Convert.ToInt32(cmdVerificar.ExecuteScalar());
+
+                        if (count > 0)
+                        {
+                            Console.WriteLine("Este número de telefone já está registrado.");
+                            return false;
+                        }
+                    }
+
+                    string query = "INSERT INTO usuarios (nome, telefone) VALUES (@Nome, @Telefone)";
                     using (MySqlCommand cmd = new MySqlCommand(query, connection))
                     {
                         cmd.Parameters.AddWithValue("@Nome", usuario.Nome);
@@ -32,14 +40,11 @@ namespace ProvaPratica
 
                         return rowsAffected > 0;
                     }
-
                 }
-
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Erro ao salvar o usuário: {ex.Message}");
                     return false;
-
                 }
             }
         }
